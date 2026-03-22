@@ -71,7 +71,7 @@ def parse_valor_correto(valor_str: str) -> int:
     return int(digits)
 
 def renderizar_conciliador():
-    st.title("🧮 Ajuste do valor Portabildiade de Saída - SIDE")
+    st.title("🧮 Ajuste do valor Portabilidade de Saída - SIDE")
     st.markdown("Ajuste matemático de dízimas e arredondamentos na Portabilidade de Saída.")
     st.divider()
 
