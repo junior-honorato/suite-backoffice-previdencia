@@ -3,9 +3,45 @@ import pandas as pd
 import io
 import re
 import msoffcrypto
+import os
+import gc
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente
+load_dotenv()
 
 # --- CONFIGURAÇÃO GLOBAL DA PÁGINA ---
 st.set_page_config(page_title="Suíte Operações VGBL", page_icon="🏦", layout="centered")
+
+def credenciais_validas(u, p):
+    return u == os.getenv("ADMIN_USER") and p == os.getenv("ADMIN_PASS")
+
+def login_screen():
+    st.title("🔐 Acesso Restrito - Suíte VGBL")
+    with st.form("login_form"):
+        user = st.text_input("Usuário")
+        password = st.text_input("Senha", type="password")
+        submit = st.form_submit_button("Entrar", type="primary")
+        
+        if submit:
+            if credenciais_validas(user, password):
+                st.session_state.autenticado = True
+                st.success("Acesso concedido!")
+                st.rerun()
+            else:
+                st.error("Usuário ou senha inválidos.")
+
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+if not st.session_state.autenticado:
+    login_screen()
+    st.stop()
+
+# Botão de Logout na Sidebar
+if st.sidebar.button("Sair / Logout"):
+    st.session_state.autenticado = False
+    st.rerun()
 
 # ==============================================================================
 # MÓDULO 1: CONCILIADOR DE PORTABILIDADE (TXT)
@@ -123,6 +159,9 @@ def renderizar_conciliador():
                                 file_name=f"{nome_original}_alterado_SIDE.txt",
                                 mime="text/plain"
                             )
+                            # LGPD & Memory Optimization: Explicit cleanup
+                            del conteudo_bytes, conteudo_str, conteudo_ajustado, novo_arquivo_bytes
+                            gc.collect()
                 except Exception as e:
                     st.error(f"Erro ao processar: {e}")
 
@@ -268,6 +307,9 @@ def renderizar_conversor():
                     mime="text/plain",
                     type="primary"
                 )
+                # LGPD & Memory Optimization: Explicit cleanup
+                del df, std, txt_string
+                gc.collect()
             except Exception as e:
                 st.error(f"Erro na conversão: {e}")
         except PermissionError:

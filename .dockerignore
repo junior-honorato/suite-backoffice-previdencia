@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+build/
+dist/
+*.spec
+
+# Secrets & Local Config
+.env
+.env.example
+.streamlit/config.toml
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# App specific
+*.txt
+*.xls
+*.xlsx
+iniciar_sistema.py
+iniciar_sistema.spec

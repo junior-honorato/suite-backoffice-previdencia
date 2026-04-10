@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+build/
+dist/
+*.spec
+
+# Streamlit
+.streamlit/
+
+# Docker
+.docker/
+
+# Excel/TXT local artifacts (if any)
+*_alterado_SIDE.txt
+*_padronizado.txt
