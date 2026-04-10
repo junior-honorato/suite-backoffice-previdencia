@@ -1,6 +1,3 @@
-# Secrets
-.env
-
 # Python
 __pycache__/
 *.py[cod]
@@ -13,9 +10,6 @@ dist/
 
 # Streamlit
 .streamlit/
-
-# Docker
-.docker/
 
 # Excel/TXT local artifacts (if any)
 *_alterado_SIDE.txt
