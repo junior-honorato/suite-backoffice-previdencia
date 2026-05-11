@@ -4,6 +4,7 @@ import io
 import re
 import msoffcrypto
 import gc
+import zipfile
 
 # --- CONFIGURAÇÃO GLOBAL DA PÁGINA ---
 st.set_page_config(page_title="Suíte Operações VGBL", page_icon="🏦", layout="centered")
@@ -291,6 +292,82 @@ def renderizar_conversor():
                 st.rerun()
 
 # ==============================================================================
+# MÓDULO 3: CONVERSOR LOTE TXT (LAYOUT 1.21)
+# ==============================================================================
+def renderizar_conversor_lote() -> None:
+    st.title("🗂️ Conversor em Lote para Layout 1.21")
+    st.markdown("Processa múltiplos arquivos TXT (padrão SIDE/FENAPREVI) e converte para o novo Layout 1.21.")
+    st.divider()
+
+    arquivos_up = st.file_uploader(
+        "Selecione múltiplos arquivos TXT",
+        type=["txt"],
+        accept_multiple_files=True
+    )
+
+    if arquivos_up:
+        st.info(f"{len(arquivos_up)} arquivo(s) selecionado(s).")
+        
+        if st.button("Processar Lote", type="primary"):
+            zip_buffer = io.BytesIO()
+            
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                for arquivo in arquivos_up:
+                    conteudo_bytes = arquivo.getvalue()
+                    
+                    try:
+                        conteudo_str = conteudo_bytes.decode("cp1252")
+                    except UnicodeDecodeError:
+                        conteudo_str = conteudo_bytes.decode("latin-1")
+                        
+                    linhas = conteudo_str.splitlines()
+                    
+                    fip = ""
+                    portabilidade = ""
+                    for ln in linhas:
+                        if ln.startswith("01"):
+                            fip = ln[8:13].ljust(5, " ")
+                            portabilidade = ln[13:23].ljust(10, " ")
+                            break
+                            
+                    novas_linhas = []
+                    for ln in linhas:
+                        if ln.startswith("02"):
+                            prefixo_seq = ln[:8]
+                            restante_dados = ln[8:48]
+                            nova_linha = prefixo_seq + fip + portabilidade + restante_dados
+                            nova_linha = nova_linha.ljust(1000, " ")
+                            novas_linhas.append(nova_linha)
+                        else:
+                            novas_linhas.append(ln)
+                            
+                    novo_conteudo_str = "\r\n".join(novas_linhas) + "\r\n"
+                    
+                    nome_original = arquivo.name
+                    if nome_original.lower().endswith(".txt"):
+                        nome_base = nome_original[:-4]
+                    else:
+                        nome_base = nome_original
+                        
+                    novo_nome = f"{nome_base}_layout_1_21.txt"
+                    zf.writestr(novo_nome, novo_conteudo_str.encode("cp1252"))
+            
+            zip_bytes = zip_buffer.getvalue()
+            
+            st.success("✅ Lote processado com sucesso!")
+            
+            st.download_button(
+                label="📥 Baixar Lote Convertido (.zip)",
+                data=zip_bytes,
+                file_name="lote_convertido_layout_1_21.zip",
+                mime="application/zip"
+            )
+            
+            # LGPD & Memory Optimization: Explicit cleanup
+            del zip_buffer, zip_bytes, arquivos_up
+            gc.collect()
+
+# ==============================================================================
 # MOTOR PRINCIPAL (BARRA LATERAL / MENU)
 # ==============================================================================
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2830/2830284.png", width=60) # Ícone genérico de banco
@@ -299,7 +376,11 @@ st.sidebar.markdown("Selecione a ferramenta desejada:")
 
 opcao = st.sidebar.radio(
     "Navegação:",
-    ["1. Ajuste valor Portabilidade Saída", "2. Conversor Excel para TXT padrão SIDE"]
+    [
+        "1. Ajuste valor Portabilidade Saída", 
+        "2. Conversor Excel para TXT padrão SIDE",
+        "3. Conversor Lote (Layout 1.21)"
+    ]
 )
 
 st.sidebar.divider()
@@ -310,3 +391,5 @@ if opcao == "1. Ajuste valor Portabilidade Saída":
     renderizar_conciliador()
 elif opcao == "2. Conversor Excel para TXT padrão SIDE":
     renderizar_conversor()
+elif opcao == "3. Conversor Lote (Layout 1.21)":
+    renderizar_conversor_lote()

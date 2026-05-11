@@ -18,6 +18,11 @@ A suíte consolida as seguintes ferramentas em uma única interface Web (Streaml
 * **Solução:** Um motor de conversão que mapeia as colunas de datas e valores no Excel, aplica preenchimento de zeros à esquerda (`zfill`) e espaços à direita (`ljust`), gerando o arquivo pronto para upload.
 * **Segurança:** Suporte nativo para leitura de planilhas criptografadas/protegidas por senha diretamente na interface.
 
+### 3. 🗂️ Conversor Lote (Layout 1.21)
+* **Problema:** A necessidade de migrar em lote os arquivos de Layout antigo para o novo padrão 1.21 (SIDE/FENAPREVI), que exige o FIP e Portabilidade inseridos nas linhas de movimento (02).
+* **Solução:** O sistema processa múltiplos arquivos TXT simultaneamente, extrai dinamicamente as informações do cabeçalho (01) e as injeta no corpo (02), reajustando os espaços. O resultado é entregue em um único pacote `.zip` otimizando o download e a organização.
+* **Desempenho:** Arquitetura otimizada para memória (limpeza explícita com `gc.collect()`), garantindo o processamento de lotes grandes sem estourar o limite de uso local.
+
 ## 🛠️ Tecnologias Utilizadas
 * **Frontend/Interface:** Streamlit
 * **Engenharia de Dados:** Pandas, Openpyxl, xlrd
