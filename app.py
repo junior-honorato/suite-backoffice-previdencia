@@ -368,6 +368,97 @@ def renderizar_conversor_lote() -> None:
             gc.collect()
 
 # ==============================================================================
+# MÓDULO 4: ANALISADOR DE PORTABILIDADE DE ENTRADA (LEI 14.803)
+# ==============================================================================
+POS_INI_DATA = 23
+POS_FIM_DATA = 31
+POS_INI_TIPO = 31
+POS_FIM_TIPO = 49
+POS_INI_VALOR = 49
+POS_FIM_VALOR = 63
+
+def renderizar_analise_portabilidade_entrada() -> None:
+    st.title("🏦 Módulo 4: Analisador de Portabilidade de Entrada (Lei 14.803)")
+    st.markdown("Importe arquivos TXT padrão SIDE de Portabilidade de Entrada para extração posicional e análise do histórico integral.")
+    st.divider()
+
+    uploaded_file = st.file_uploader(
+        "Arraste o arquivo TXT de Portabilidade de Entrada aqui",
+        type=["txt"]
+    )
+
+    if uploaded_file is not None:
+        conteudo_bytes = uploaded_file.getvalue()
+        
+        try:
+            conteudo_str = conteudo_bytes.decode("cp1252")
+        except UnicodeDecodeError:
+            conteudo_str = conteudo_bytes.decode("latin-1")
+            
+        linhas = conteudo_str.splitlines()
+        
+        dados_movimentos = []
+        total_acumulado = 0
+        
+        for idx, linha in enumerate(linhas, start=1):
+            if linha.startswith("02"):
+                max_pos = max(POS_FIM_DATA, POS_FIM_TIPO, POS_FIM_VALOR)
+                if len(linha) >= max_pos:
+                    # Slicing
+                    data_raw = linha[POS_INI_DATA:POS_FIM_DATA].strip()
+                    tipo_raw = linha[POS_INI_TIPO:POS_FIM_TIPO].strip()
+                    valor_raw = linha[POS_INI_VALOR:POS_FIM_VALOR].strip()
+                    
+                    # Formatar data YYYYMMDD para DD/MM/YYYY
+                    if len(data_raw) == 8 and data_raw.isdigit():
+                        data_formatada = f"{data_raw[6:8]}/{data_raw[4:6]}/{data_raw[0:4]}"
+                    else:
+                        data_formatada = data_raw
+                    
+                    # Tratamento do Valor
+                    try:
+                        valor_cents = int(valor_raw)
+                    except ValueError:
+                        valor_cents = 0
+                        
+                    total_acumulado += valor_cents
+                    
+                    dados_movimentos.append({
+                        "Linha": idx,
+                        "Data da Contribuição": data_formatada,
+                        "Tipo de Contribuição/Cobertura": tipo_raw,
+                        "Valor (R$)": valor_cents / 100.0
+                    })
+        
+        if dados_movimentos:
+            df = pd.DataFrame(dados_movimentos)
+            
+            st.subheader("Resultados da Análise")
+            st.metric(
+                label="Valor Total Acumulado",
+                value=format_brl(total_acumulado)
+            )
+            
+            st.markdown("### Valores Nominais Detalhados")
+            st.dataframe(
+                df,
+                column_config={
+                    "Valor (R$)": st.column_config.NumberColumn(
+                        "Valor (R$)",
+                        format="R$ %.2f"
+                    )
+                },
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.warning("Nenhuma linha de movimento ('02') encontrada no arquivo enviado ou o arquivo está vazio.")
+            
+        # LGPD & Memory Optimization: Explicit cleanup
+        del conteudo_bytes, conteudo_str, linhas, dados_movimentos
+        gc.collect()
+
+# ==============================================================================
 # MOTOR PRINCIPAL (BARRA LATERAL / MENU)
 # ==============================================================================
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2830/2830284.png", width=60) # Ícone genérico de banco
@@ -379,7 +470,8 @@ opcao = st.sidebar.radio(
     [
         "1. Ajuste valor Portabilidade Saída", 
         "2. Conversor Excel para TXT padrão SIDE",
-        "3. Conversor Lote (Layout 1.21)"
+        "3. Conversor Lote (Layout 1.21)",
+        "4. Analisador Portabilidade Entrada (Lei 14.803)"
     ]
 )
 
@@ -393,3 +485,5 @@ elif opcao == "2. Conversor Excel para TXT padrão SIDE":
     renderizar_conversor()
 elif opcao == "3. Conversor Lote (Layout 1.21)":
     renderizar_conversor_lote()
+elif opcao == "4. Analisador Portabilidade Entrada (Lei 14.803)":
+    renderizar_analise_portabilidade_entrada()

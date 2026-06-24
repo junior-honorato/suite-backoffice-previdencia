@@ -23,6 +23,11 @@ A suíte consolida as seguintes ferramentas em uma única interface Web (Streaml
 * **Solução:** O sistema processa múltiplos arquivos TXT simultaneamente, extrai dinamicamente as informações do cabeçalho (01) e as injeta no corpo (02), reajustando os espaços. O resultado é entregue em um único pacote `.zip` otimizando o download e a organização.
 * **Desempenho:** Arquitetura otimizada para memória (limpeza explícita com `gc.collect()`), garantindo o processamento de lotes grandes sem estourar o limite de uso local.
 
+### 4. 🏦 Analisador de Portabilidade de Entrada (Lei 14.803)
+* **Problema:** A Lei 14.803 exige a análise do histórico integral de movimentações da casa previdenciária anterior, demandando a extração de dados detalhados de contribuições passadas.
+* **Solução:** O sistema importa o arquivo TXT padrão SIDE de Portabilidade de Entrada, executa a leitura posicional das linhas de movimento (02), extrai os dados (Data da Contribuição, Tipo de Contribuição/Cobertura e Valor) e apresenta um painel analítico com o valor total acumulado e a listagem nominal detalhada.
+* **Segurança:** O processamento ocorre 100% de forma local, limpando os dados da memória imediatamente após a exibição para plena conformidade com as regras da LGPD.
+
 ## 🛠️ Tecnologias Utilizadas
 * **Frontend/Interface:** Streamlit
 * **Engenharia de Dados:** Pandas, Openpyxl, xlrd
