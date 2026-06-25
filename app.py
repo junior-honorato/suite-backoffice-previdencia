@@ -370,16 +370,9 @@ def renderizar_conversor_lote() -> None:
 # ==============================================================================
 # MÓDULO 4: ANALISADOR DE PORTABILIDADE DE ENTRADA (LEI 14.803)
 # ==============================================================================
-POS_INI_DATA = 23
-POS_FIM_DATA = 31
-POS_INI_TIPO = 31
-POS_FIM_TIPO = 49
-POS_INI_VALOR = 49
-POS_FIM_VALOR = 63
-
 def renderizar_analise_portabilidade_entrada() -> None:
     st.title("🏦 Módulo 4: Analisador de Portabilidade de Entrada (Lei 14.803)")
-    st.markdown("Importe arquivos TXT padrão SIDE de Portabilidade de Entrada para extração posicional e análise do histórico integral.")
+    st.markdown("Importe arquivos TXT padrão SIDE (Layout 1.21) de Portabilidade de Entrada para extração posicional e análise do histórico integral.")
     st.divider()
 
     uploaded_file = st.file_uploader(
@@ -398,53 +391,85 @@ def renderizar_analise_portabilidade_entrada() -> None:
         linhas = conteudo_str.splitlines()
         
         dados_movimentos = []
-        total_acumulado = 0
+        total_nominal = 0
+        total_portado = 0
+        
+        # Variável de controle para armazenar o identificador da linha 01
+        codigo_portabilidade = ""
         
         for idx, linha in enumerate(linhas, start=1):
-            if linha.startswith("02"):
-                max_pos = max(POS_FIM_DATA, POS_FIM_TIPO, POS_FIM_VALOR)
-                if len(linha) >= max_pos:
-                    # Slicing
-                    data_raw = linha[POS_INI_DATA:POS_FIM_DATA].strip()
-                    tipo_raw = linha[POS_INI_TIPO:POS_FIM_TIPO].strip()
-                    valor_raw = linha[POS_INI_VALOR:POS_FIM_VALOR].strip()
+            if linha.startswith("01"):
+                if len(linha) >= 23:
+                    val_port = linha[13:23].strip()
+                    codigo_portabilidade = val_port.replace("03654", "")
+                    
+            elif linha.startswith("02"):
+                # Garante que a linha tenha comprimento suficiente para o fatiamento
+                if len(linha) >= 63:
+                    data_movimento = linha[25:33].strip()
+                    valor_nominal_str = linha[33:48].strip()
+                    valor_portado_str = linha[48:63].strip()
                     
                     # Formatar data YYYYMMDD para DD/MM/YYYY
-                    if len(data_raw) == 8 and data_raw.isdigit():
-                        data_formatada = f"{data_raw[6:8]}/{data_raw[4:6]}/{data_raw[0:4]}"
+                    if len(data_movimento) == 8 and data_movimento.isdigit():
+                        data_formatada = f"{data_movimento[6:8]}/{data_movimento[4:6]}/{data_movimento[0:4]}"
                     else:
-                        data_formatada = data_raw
+                        data_formatada = data_movimento
                     
-                    # Tratamento do Valor
+                    # Tratamento do Valor Nominal
                     try:
-                        valor_cents = int(valor_raw)
+                        val_nominal_cents = int(valor_nominal_str)
                     except ValueError:
-                        valor_cents = 0
+                        val_nominal_cents = 0
                         
-                    total_acumulado += valor_cents
+                    # Tratamento do Valor Portado
+                    try:
+                        val_port_cents = int(valor_portado_str)
+                    except ValueError:
+                        val_port_cents = 0
+                        
+                    total_nominal += val_nominal_cents
+                    total_portado += val_port_cents
                     
                     dados_movimentos.append({
-                        "Linha": idx,
-                        "Data da Contribuição": data_formatada,
-                        "Tipo de Contribuição/Cobertura": tipo_raw,
-                        "Valor (R$)": valor_cents / 100.0
+                        "Código Portabilidade": codigo_portabilidade,
+                        "Data Movimento": data_formatada,
+                        "Valor Nominal do Lançamento": val_nominal_cents / 100.0,
+                        "Valor Portado": val_port_cents / 100.0
                     })
         
         if dados_movimentos:
             df = pd.DataFrame(dados_movimentos)
             
+            # Ordenando as colunas conforme especificação:
+            df = df[[
+                "Código Portabilidade",
+                "Data Movimento",
+                "Valor Nominal do Lançamento",
+                "Valor Portado"
+            ]]
+            
             st.subheader("Resultados da Análise")
-            st.metric(
-                label="Valor Total Acumulado",
-                value=format_brl(total_acumulado)
+            col1, col2 = st.columns(2)
+            col1.metric(
+                label="Total Nominal do Lançamento",
+                value=format_brl(total_nominal)
+            )
+            col2.metric(
+                label="Total Portado",
+                value=format_brl(total_portado)
             )
             
             st.markdown("### Valores Nominais Detalhados")
             st.dataframe(
                 df,
                 column_config={
-                    "Valor (R$)": st.column_config.NumberColumn(
-                        "Valor (R$)",
+                    "Valor Nominal do Lançamento": st.column_config.NumberColumn(
+                        "Valor Nominal do Lançamento",
+                        format="R$ %.2f"
+                    ),
+                    "Valor Portado": st.column_config.NumberColumn(
+                        "Valor Portado",
                         format="R$ %.2f"
                     )
                 },
