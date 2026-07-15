@@ -28,6 +28,11 @@ A suíte consolida as seguintes ferramentas em uma única interface Web (Streaml
 * **Solução:** O sistema importa o arquivo TXT padrão SIDE de Portabilidade de Entrada, executa a leitura posicional das linhas de movimento (02), extrai os dados (Data da Contribuição, Tipo de Contribuição/Cobertura e Valor) e apresenta um painel analítico com o valor total acumulado e a listagem nominal detalhada.
 * **Segurança:** O processamento ocorre 100% de forma local, limpando os dados da memória imediatamente após a exibição para plena conformidade com as regras da LGPD.
 
+### 5. 🔄 Marcação Retratabilidade "De Acordo com a Origem"
+* **Problema:** Necessidade operacional de ajustar o caractere na posição 715 da segunda linha (linha 2) de arquivos TXT padrão SIDE para "O".
+* **Solução:** O sistema lê o arquivo TXT, detecta a posição 715 da segunda linha, substitui o caractere para "O" (com preenchimento automático de espaços à direita caso a linha 2 original seja menor que a desejada) e disponibiliza o download com o sufixo `_ajustadoSIDE`.
+* **Segurança:** Processamento local e limpeza em memória garantindo conformidade com a LGPD.
+
 ## 🛠️ Tecnologias Utilizadas
 * **Frontend/Interface:** Streamlit
 * **Engenharia de Dados:** Pandas, Openpyxl, xlrd

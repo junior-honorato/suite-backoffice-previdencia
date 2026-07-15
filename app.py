@@ -484,6 +484,90 @@ def renderizar_analise_portabilidade_entrada() -> None:
         gc.collect()
 
 # ==============================================================================
+# MÓDULO 5: MARCAÇÃO RETRATABILIDADE "DE ACORDO COM A ORIGEM"
+# ==============================================================================
+def renderizar_retratabilidade() -> None:
+    st.title("🔄 Marcação retratabilidade \"De Acordo com a Origem\"")
+    st.markdown("Altera a posição 715 da segunda linha (linha 2) de arquivos TXT padrão SIDE para 'O', mantendo o restante do arquivo intacto.")
+    st.divider()
+
+    uploaded_file = st.file_uploader(
+        "Arraste o arquivo TXT padrão SIDE aqui",
+        type=["txt"]
+    )
+
+    if uploaded_file is not None:
+        conteudo_bytes = uploaded_file.getvalue()
+        
+        try:
+            conteudo_str = conteudo_bytes.decode("cp1252")
+        except UnicodeDecodeError:
+            conteudo_str = conteudo_bytes.decode("latin-1")
+            
+        linhas = conteudo_str.splitlines()
+        
+        if len(linhas) < 2:
+            st.error("🚨 **Erro de Validação:** O arquivo deve possuir pelo menos 2 linhas.")
+        else:
+            linha_2 = linhas[1]
+            pos_idx = 714  # Posição 715 (1-based) é o índice 714 (0-based)
+            
+            st.subheader("Análise do Arquivo")
+            
+            # Identificação do caractere atual na posição 715
+            if len(linha_2) > pos_idx:
+                char_atual = linha_2[pos_idx]
+                st.info(f"O caractere na posição 715 da linha 2 atualmente é: **'{char_atual}'**")
+            else:
+                char_atual = "N/A (linha mais curta que 715 caracteres)"
+                st.warning(f"⚠️ A linha 2 do arquivo possui apenas {len(linha_2)} caracteres (menor que a posição 715). Ela será preenchida com espaços até a posição 715 para a substituição.")
+                
+            if st.button("Processar e Ajustar", type="primary"):
+                try:
+                    # Garantir que a linha tenha comprimento suficiente
+                    if len(linha_2) <= pos_idx:
+                        linha_2_completa = linha_2.ljust(pos_idx + 1, " ")
+                    else:
+                        linha_2_completa = linha_2
+                    
+                    # Substituir o caractere na posição 715 por 'O'
+                    linha_2_lista = list(linha_2_completa)
+                    linha_2_lista[pos_idx] = 'O'
+                    linhas[1] = "".join(linha_2_lista)
+                    
+                    # Reconstruir o arquivo com padrão de quebra de linha CRLF
+                    novo_conteudo_str = "\r\n".join(linhas) + "\r\n"
+                    novo_conteudo_bytes = novo_conteudo_str.encode("cp1252")
+                    
+                    st.success("✅ Arquivo processado com sucesso!")
+                    
+                    col1, col2 = st.columns(2)
+                    col1.metric(label="Antes (Posição 715)", value=f"'{char_atual}'")
+                    col2.metric(label="Depois (Posição 715)", value="'O'")
+                    
+                    # Nome do novo arquivo: nome original + _ajustadoSIDE
+                    nome_original = uploaded_file.name
+                    if nome_original.lower().endswith(".txt"):
+                        nome_base = nome_original[:-4]
+                    else:
+                        nome_base = nome_original
+                    novo_nome = f"{nome_base}_ajustadoSIDE.txt"
+                    
+                    st.download_button(
+                        label="📥 Baixar Arquivo Ajustado",
+                        data=novo_conteudo_bytes,
+                        file_name=novo_nome,
+                        mime="text/plain",
+                        type="primary"
+                    )
+                except Exception as e:
+                    st.error(f"Erro ao processar arquivo: {e}")
+                    
+        # LGPD & Memory Optimization: Explicit cleanup
+        del conteudo_bytes, conteudo_str, linhas
+        gc.collect()
+
+# ==============================================================================
 # MOTOR PRINCIPAL (BARRA LATERAL / MENU)
 # ==============================================================================
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2830/2830284.png", width=60) # Ícone genérico de banco
@@ -496,7 +580,8 @@ opcao = st.sidebar.radio(
         "1. Ajuste valor Portabilidade Saída", 
         "2. Conversor Excel para TXT padrão SIDE",
         "3. Conversor Lote (Layout 1.21)",
-        "4. Analisador Portabilidade Entrada (Lei 14.803)"
+        "4. Analisador Portabilidade Entrada (Lei 14.803)",
+        "5. Marcação retratabilidade 'De Acordo com a Origem'"
     ]
 )
 
@@ -512,3 +597,6 @@ elif opcao == "3. Conversor Lote (Layout 1.21)":
     renderizar_conversor_lote()
 elif opcao == "4. Analisador Portabilidade Entrada (Lei 14.803)":
     renderizar_analise_portabilidade_entrada()
+elif opcao == "5. Marcação retratabilidade 'De Acordo com a Origem'":
+    renderizar_retratabilidade()
+
